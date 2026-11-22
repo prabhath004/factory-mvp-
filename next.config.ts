@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
+import { configuredLiveUpdates } from "./lib/live-mode";
 
 const nextConfig: NextConfig = {
   agentRules: false,
-  env: { NEXT_PUBLIC_LIVE_UPDATES: process.env.VERCEL_ENV === "preview" ? "off" : "on" },
+  env: { NEXT_PUBLIC_LIVE_UPDATES: configuredLiveUpdates({ explicit: process.env.NEXT_PUBLIC_LIVE_UPDATES, vercelEnv: process.env.VERCEL_ENV }) },
   turbopack: {
     rules: {
       "*.css": {
