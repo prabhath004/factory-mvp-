@@ -42,19 +42,19 @@
 
 ### Checkpoint: product flow
 
-- [ ] Keyboard flow covers create mission, approve plan, change tabs, and answer question.
+- [ ] Keyboard flow covers create mission, approve plan, change tabs, and answer question. (Real-browser DevTools MCP and authenticated local environment unavailable.)
 - [x] No fabricated metrics or actions.
-- [ ] Layout works at 1440px, 1280px, 768px, and 390px.
+- [ ] Layout works at 1440px, 1280px, 768px, and 390px. (Responsive CSS implemented; screenshot review requires the authenticated local environment.)
 
 ## Phase 4: Verification and handoff
 
 - [x] Add deterministic Playwright coverage for the credential-free mission flow or document the exact environment blocker.
 - [x] Write `docs/COFORGE_LOCAL_SETUP.md` and `docs/COFORGE_DEMO_RUNBOOK.md`.
-- [ ] Run focused tests, full available regressions, lint, build/type-check, dependency audit, and secret scan.
-- [ ] Review the full diff for correctness, security, accessibility, and unnecessary complexity.
+- [x] Run focused tests, full available regressions, lint, build/type-check, dependency audit, and secret scan. (Credentialed regressions are blocked; dependency audit findings remain for the security upgrade.)
+- [x] Review the full diff for correctness, security, accessibility, and unnecessary complexity.
 
 ### Checkpoint: complete
 
-- [ ] Every implemented P0 behavior has test evidence.
-- [ ] External credential-dependent validation is explicitly distinguished from local verification.
-- [ ] Known limitations and the upstream security upgrade are handed off.
+- [ ] Every implemented P0 behavior has test evidence. (Database/API/browser/live-run behaviors require the credentialed environment.)
+- [x] External credential-dependent validation is explicitly distinguished from local verification.
+- [x] Known limitations and the upstream security upgrade are handed off.
