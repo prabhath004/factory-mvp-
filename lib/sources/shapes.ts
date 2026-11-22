@@ -17,7 +17,21 @@ const linear = {
   }),
 };
 
-const SHIPPED = { linear } satisfies Record<string, SourceShape>;
+const coforge = {
+  label: "Coforge",
+  writeback: z.object({ kind: z.literal("coforge"), missionId: z.uuid() }),
+  sourceState: z.object({
+    status: z.string(),
+    labels: z.array(z.string()).default([]),
+    repository: z.string().min(1),
+    provider: z.string().nullable(),
+    model: z.string().nullable(),
+    execution: z.literal("local"),
+    noteKeys: z.array(z.string()).default([]),
+  }),
+};
+
+const SHIPPED = { linear, coforge } satisfies Record<string, SourceShape>;
 
 /** The sources the factory ships. Regressions register a fake one beside them (registerSource in ./index). */
 export type JobSource = keyof typeof SHIPPED;

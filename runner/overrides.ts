@@ -61,6 +61,11 @@ export function planLaunch(
     if (model) harness = { provider: asked.provider, model };
     else notes.push(`${nameOf(asked.provider)} reports no current model, so it runs on the Settings harness ${nameOf(harness.provider)}.`);
   }
+  if (asked.model) {
+    const available = harnesses?.find((candidate) => candidate.id === harness.provider)?.models.some((model) => model.slug === asked.model);
+    if (available) harness = { ...harness, model: asked.model };
+    else notes.push(`${nameOf(harness.provider)} does not report model ${asked.model}, so it runs on ${harness.model}.`);
+  }
 
   const inSandbox = sandboxHarness(harness, can.driverOf(harness.provider), can.claude, can.codexModel);
   const modal = can.modal ?? (needsCodexSlot(inSandbox.choice.provider) && !can.codexSlot ? "no Codex login slot is usable" : null);
@@ -87,6 +92,7 @@ export function planLaunch(
 
   const applied = {
     ...(asked.provider === harness.provider && { provider: asked.provider }),
+    ...(asked.model === harness.model && { model: asked.model }),
     ...(asked.execution === execution && { execution }),
   };
   const ticket = Object.keys(applied).length > 0 || notes.length > 0 ? { ...applied, notes } : null;

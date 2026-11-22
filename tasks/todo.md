@@ -12,14 +12,14 @@
 
 ## Phase 1: Source and lifecycle
 
-- [ ] Implement the Coforge source adapter with idempotent claim, writeback, question/reply, stop, retry, note, and local execution overrides.
-- [ ] Register Coforge without changing the Linear adapter or generic runner behavior.
-- [ ] Add adapter and generic lifecycle regression coverage.
+- [x] Implement the Coforge source adapter with idempotent claim, writeback, question/reply, stop, retry, note, and local execution overrides.
+- [x] Register Coforge without changing the Linear adapter or generic runner behavior.
+- [x] Add adapter regression coverage; the credentialed generic lifecycle suite remains an environment-gated final check.
 
 ### Checkpoint: execution seam
 
-- [ ] Approved mission is offered once and maps to one `coforge` job.
-- [ ] Stage, stop, reply, and retry transitions are durable and replay-safe.
+- [x] Approved mission is offered once and maps to one `coforge` job by database uniqueness.
+- [x] Stage, stop, reply, and retry transitions are durable and replay-safe.
 - [ ] Existing source regressions remain compatible.
 
 ## Phase 2: Planner and authenticated API

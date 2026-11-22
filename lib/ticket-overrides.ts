@@ -14,10 +14,10 @@ export const RUNS_ON_LABELS: Record<Execution, string> = { local: "Local", modal
 const RUNS_ON_ALIASES: Record<Execution, readonly string[]> = { local: [], modal: ["Modal"] };
 
 /** What a ticket asks for, field by field, by the names it shows; more than one value in a field is a conflict. */
-export type SourceOverrides = { [F in keyof typeof OVERRIDE_GROUPS]: string[] };
+export type SourceOverrides = { [F in keyof typeof OVERRIDE_GROUPS]: string[] } & { model?: string[] };
 export const NO_OVERRIDES: SourceOverrides = { harness: [], runsOn: [], repository: [] };
 
-export type TicketOverrides = { provider?: string; execution?: Execution; problems: string[] };
+export type TicketOverrides = { provider?: string; model?: string; execution?: Execution; problems: string[] };
 
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 const quoted = (names: readonly string[]) => names.map((name) => `"${name}"`).join(", ");
@@ -48,6 +48,10 @@ export function ticketOverrides(asked: SourceOverrides, harnesses: readonly Harn
     if (execution) result.execution = execution;
     else problems.push(`The ${RUNS_ON_GROUP} label "${name}" is neither ${Object.values(RUNS_ON_LABELS).join(" nor ")}, so it runs where Settings say.`);
   }
+
+  const models = asked.model ?? [];
+  if (models.length > 1) problems.push("The mission requests more than one model, so it runs on the harness default model.");
+  else if (models.length === 1) result.model = models[0];
   return result;
 }
 
@@ -64,6 +68,7 @@ export function desiredLabelGroups(harnesses: readonly Harness[]) {
 /** What a job records about its ticket's overrides: what applied, and each fallback the runner took instead. */
 export const ticketRecordSchema = z.object({
   provider: z.string().optional(),
+  model: z.string().optional(),
   execution: executionSchema.optional(),
   notes: z.array(z.string()),
 });

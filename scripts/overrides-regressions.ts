@@ -1,6 +1,7 @@
 import "./test-guard";
 import assert from "node:assert/strict";
 import { eq, inArray } from "drizzle-orm";
+import type { Job } from "../lib/sources/types";
 
 const { db } = await import("../db/client");
 const { auditLog, jobs } = await import("../db/schema");
@@ -316,7 +317,7 @@ const realNote = overrideRuntime.note;
 overrideRuntime.note = (job, key, body) => noting.note(job as never, key, body);
 await db.insert(jobs).values(linearJob(id, `OVR-${stamp}`, { url: "https://linear.app/x/issue/OVR" }));
 try {
-  const row = async () => parseJob((await db.select().from(jobs).where(eq(jobs.id, jid)))[0]!);
+  const row = async () => parseJob((await db.select().from(jobs).where(eq(jobs.id, jid)))[0]!) as Job<"linear">;
   const ticket = { notes: ["Cloud sandboxes cannot launch on this runner (no sandbox image is built), so it runs locally."] };
   await announceFallbacks(await row(), ticket);
   await announceFallbacks(await row(), ticket);
