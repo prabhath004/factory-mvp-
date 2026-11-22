@@ -20,7 +20,7 @@
 
 - [x] Approved mission is offered once and maps to one `coforge` job by database uniqueness.
 - [x] Stage, stop, reply, and retry transitions are durable and replay-safe.
-- [ ] Existing source regressions remain compatible.
+- [ ] Existing source regressions remain compatible. (Credentialed Neon harness unavailable locally.)
 
 ## Phase 2: Planner and authenticated API
 
@@ -30,26 +30,26 @@
 
 ### Checkpoint: API
 
-- [ ] Unauthorized, invalid, duplicate, stale, and happy-path contract tests pass.
+- [ ] Unauthorized, invalid, duplicate, stale, and happy-path database contract tests pass. (Credentialed Neon harness unavailable locally.)
 - [x] Next.js type-check and lint pass.
 
 ## Phase 3: Product UI
 
-- [ ] Add Projects and Missions navigation and a responsive mission table with honest runner/cost/PR states.
-- [ ] Add the new-mission composer and editable plan approval flow.
-- [ ] Add the three-region mission workspace with task, activity, logs/evidence, PR, usage, question, stop, and retry surfaces.
-- [ ] Add loading, empty, error, stale/disconnected, and mobile states.
+- [x] Add Projects and Missions navigation and a responsive mission table with honest runner/cost/PR states.
+- [x] Add the new-mission composer and editable plan approval flow.
+- [x] Add the three-region mission workspace with task, activity, logs/evidence, PR, usage, question, stop, and retry surfaces.
+- [x] Add loading, empty, error, stale/disconnected, and mobile states.
 
 ### Checkpoint: product flow
 
 - [ ] Keyboard flow covers create mission, approve plan, change tabs, and answer question.
-- [ ] No fabricated metrics or actions.
+- [x] No fabricated metrics or actions.
 - [ ] Layout works at 1440px, 1280px, 768px, and 390px.
 
 ## Phase 4: Verification and handoff
 
-- [ ] Add deterministic Playwright coverage for the credential-free mission flow or document the exact environment blocker.
-- [ ] Write `docs/COFORGE_LOCAL_SETUP.md` and `docs/COFORGE_DEMO_RUNBOOK.md`.
+- [x] Add deterministic Playwright coverage for the credential-free mission flow or document the exact environment blocker.
+- [x] Write `docs/COFORGE_LOCAL_SETUP.md` and `docs/COFORGE_DEMO_RUNBOOK.md`.
 - [ ] Run focused tests, full available regressions, lint, build/type-check, dependency audit, and secret scan.
 - [ ] Review the full diff for correctness, security, accessibility, and unnecessary complexity.
 
