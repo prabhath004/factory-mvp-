@@ -33,6 +33,7 @@ const { watchMerges } = await import("./post-merge");
 const { syncOverrideLabels } = await import("./overrides");
 const { baseImageIdle, rebuildBaseImage, stopBaseImage } = await import("./base-image");
 const { advanceOnboarding, onboardRepo, repoPushed, requestRebuild } = await import("./onboarding");
+const { ensureManagedRepo } = await import("./managed-repo");
 const { repoPushDetailSchema } = await import("../lib/webhooks");
 const { notifySlack, sendSlackTest, slackFromEnv } = await import("./slack");
 const { keepSubscribed } = await import("./realtime");
@@ -101,7 +102,7 @@ async function handle(intent: IntentRow) {
     case "close_job":
       return { close: await closeJob(intent.job_id!, closeDetailSchema.parse(JSON.parse(intent.detail ?? "null"))), synced: await writeBackPass() };
     case "onboard_repo":
-      return { onboarding: await onboardRepo(intent.detail!) };
+      return { checkout: await ensureManagedRepo(intent.detail!), onboarding: await onboardRepo(intent.detail!) };
     case "rebuild_repo_image":
       return { rebuild: await requestRebuild(intent.detail!, "the owner asked for a rebuild") };
     case "repo_push":

@@ -2,6 +2,8 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir, userInfo } from "node:os";
 import { dirname, join } from "node:path";
+import { CONFIG_PATH } from "../lib/config";
+import { ensureLocalRunnerConfig } from "../lib/local-runner-config";
 
 // Installs the runner as a launchd LaunchAgent: started at login, restarted when it exits, logging
 // to ~/Library/Logs/marshal-factory/runner.log. Re-running with nothing changed leaves it alone.
@@ -30,8 +32,13 @@ if (process.argv.includes("--uninstall")) {
   process.exit(0);
 }
 
+const envPath = join(root, ".env.local");
+if (existsSync(envPath)) process.loadEnvFile(envPath);
+if (ensureLocalRunnerConfig(CONFIG_PATH)) console.log(`created   ${CONFIG_PATH}`);
+
 // launchd starts with a bare PATH, so carry the directories of every tool the runner calls.
 const tools = ["bun", "git"].map(which);
+execFileSync(tools[0]!, [join(root, "scripts/install-local-runtime.ts")], { cwd: root, stdio: "inherit" });
 // T3 exports its CLI path only to sessions it starts; the daemon gets it from here.
 // T3 installs its launcher at ~/.t3/bin/t3 and puts it on the login shell's PATH; launchd has neither.
 const t3 = process.env.T3CODE_CLI_PATH ?? [join(homedir(), ".t3/bin/t3")].find(existsSync) ?? which("t3");

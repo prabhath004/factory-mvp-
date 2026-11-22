@@ -43,7 +43,7 @@ import type { RepoPushDetail } from "../lib/webhooks";
 import { config } from "./config";
 import { thisMachine } from "./heartbeat";
 import { startThread } from "./launch";
-import { launchSettings } from "./ops";
+import { factoryCheckouts, launchSettings } from "./ops";
 import { leasedSlots, loginFailed, TOKEN_REFRESH_MS, uniqueViolation, writeBackLogin } from "./lifecycle";
 import { CodexLoginError, sandboxHarness, sandboxRuntime, sandboxSecrets, setupSandbox, usableSlots, writeGithubToken } from "./sandbox";
 import { threads } from "./threads";
@@ -239,6 +239,23 @@ export async function onboardRepo(repo: string) {
   if (row.onboarding_state !== "analyzing") await update(repo, (_r, d) => ({ state: "analyzing", detail: { ...d, failure: undefined } }));
   const committed = await onboardingRuntime.committedRecipe(repo);
   const parsed = committed === null ? null : parseRecipe(committed);
+  const checkout = (await factoryCheckouts()).get(repo);
+  if (checkout && !sandboxRuntime.modalToken()) {
+    await update(repo, (_r, d) => ({
+      state: "ready",
+      detail: {
+        ...d,
+        run: undefined,
+        failure: undefined,
+        summary: parsed?.ok
+          ? "Local checkout ready; verification uses the committed setup recipe."
+          : "Local checkout ready; verification discovers the repository's package scripts.",
+        ...(parsed?.ok && { recipe: parsed.recipe, recipeSource: "committed" as const, missingSecrets: [] }),
+      },
+    }));
+    log("onboarding:local-ready", { repo, checkout, recipe: parsed?.ok ? "committed" : "package-scripts" });
+    return { repo, checkout, state: "ready", recipe: parsed?.ok ? "committed" : "package-scripts" };
+  }
   if (parsed?.ok) {
     const state = await applyRecipe(repo, parsed.recipe, { recipeSource: "committed", checks: undefined, summary: undefined });
     return { repo, recipe: "committed", state, builds: await startBuilds() };
