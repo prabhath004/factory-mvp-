@@ -5,6 +5,7 @@ import {
   nextMissionStatus,
   projectInputSchema,
 } from "../lib/coforge/contracts";
+import { effectiveMissionStatus } from "../lib/coforge/status";
 
 const plan = missionPlanSchema.parse({
   summary: "Add claim status tracking.",
@@ -49,6 +50,11 @@ assert.throws(
   /draft -> approved/,
   "invalid transitions are rejected instead of inventing progress",
 );
+
+assert.equal(effectiveMissionStatus("pr_open", { stage: "pr", merge_decision: { outcome: "pending" } }), "reviewing");
+assert.equal(effectiveMissionStatus("pr_open", { stage: "pr", merge_decision: { outcome: "merge" } }), "merge_ready");
+assert.equal(effectiveMissionStatus("pr_open", { stage: "pr", merge_decision: { outcome: "handover" } }), "completed");
+assert.equal(effectiveMissionStatus("pr_open", { stage: "merged", merge_decision: null }), "merged");
 
 assert.deepEqual(
   projectInputSchema.parse({ name: "Claims", mode: "brownfield", repo: "acme/claims" }),

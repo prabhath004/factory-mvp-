@@ -25,6 +25,7 @@ export function NewMissionForm({ projects, harnesses, providersReported }: { pro
     setError(null);
     const data = new FormData(event.currentTarget);
     const acceptanceCriteria = String(data.get("acceptanceCriteria") ?? "").split("\n").map((item) => item.trim()).filter(Boolean);
+    const budgetWarning = String(data.get("budgetWarningUsd") ?? "").trim();
     const created = await fetch("/api/factory/missions", {
       method: "POST",
       headers: { "content-type": "application/json", "idempotency-key": crypto.randomUUID() },
@@ -34,7 +35,7 @@ export function NewMissionForm({ projects, harnesses, providersReported }: { pro
         provider: provider || null,
         model: data.get("model") || null,
         acceptanceCriteria,
-        budgetWarningUsd: null,
+        budgetWarningUsd: budgetWarning ? Number(budgetWarning) : null,
       }),
     });
     const result = (await created.json()) as { data?: { id: string }; error?: { message?: string } };
@@ -98,6 +99,9 @@ export function NewMissionForm({ projects, harnesses, providersReported }: { pro
         <div className="border-t p-4">
           <Label htmlFor="mission-criteria">One criterion per line</Label>
           <Textarea id="mission-criteria" name="acceptanceCriteria" className="mt-2" placeholder={"Status persists after refresh\nClaim history is visible"} />
+          <Label htmlFor="mission-budget" className="mt-4">Cost warning (USD, optional)</Label>
+          <input id="mission-budget" name="budgetWarningUsd" type="number" min="0.01" max="100000" step="0.01" inputMode="decimal" className="mt-2 h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" placeholder="10.00" />
+          <p className="mt-1 text-xs text-muted-foreground">Warns when reported spend reaches this value. It does not stop the run.</p>
         </div>
       </details>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

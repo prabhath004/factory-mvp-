@@ -8,6 +8,7 @@ import {
   coforgeMissions,
   coforgeMissionTasks,
   coforgeProjects,
+  jobs,
   machines,
   repoSettings,
 } from "@/db/schema";
@@ -223,10 +224,12 @@ export async function planMission(owner: string, id: string) {
   const version = mission.plan_version + 1;
   const now = new Date();
   await db.transaction(async (tx) => {
-    await tx
+    const updated = await tx
       .update(coforgeMissions)
       .set({ status: "awaiting_approval", plan_version: version, plan_json: plan, approved_at: null, approved_plan_version: null, updated_at: now })
-      .where(and(eq(coforgeMissions.id, id), eq(coforgeMissions.owner_id, owner), eq(coforgeMissions.plan_version, mission.plan_version)));
+      .where(and(eq(coforgeMissions.id, id), eq(coforgeMissions.owner_id, owner), eq(coforgeMissions.plan_version, mission.plan_version)))
+      .returning({ id: coforgeMissions.id });
+    if (updated.length === 0) throw new CoforgeError("STALE_PLAN", "The plan changed. Refresh and try again.", 409);
     await replaceTasks(tx, id, plan);
     await tx.insert(coforgeMissionEvents).values([
       {
@@ -377,9 +380,10 @@ export async function listMissions(owner: string, filters: { status?: string; pr
   if (filters.status) conditions.push(eq(coforgeMissions.status, filters.status as typeof coforgeMissions.$inferSelect.status));
   if (filters.projectId) conditions.push(eq(coforgeMissions.project_id, filters.projectId));
   return db
-    .select({ mission: coforgeMissions, project: coforgeProjects })
+    .select({ mission: coforgeMissions, project: coforgeProjects, job: jobs })
     .from(coforgeMissions)
     .innerJoin(coforgeProjects, eq(coforgeProjects.id, coforgeMissions.project_id))
+    .leftJoin(jobs, eq(jobs.key, coforgeMissions.key))
     .where(and(...conditions))
     .orderBy(desc(coforgeMissions.updated_at))
     .limit(100);

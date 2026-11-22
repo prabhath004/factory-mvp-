@@ -142,6 +142,7 @@ export const coforgeStore: CoforgeStore = {
           status,
           provider: job.provider,
           model: job.model,
+          final_commit_sha: job.evidence?.sha ?? job.merge_decision?.headSha,
           pr_url: job.pr_url,
           pr_number: prNumber(job.pr_url),
           ...(status === "failed" || status === "cancelled" || status === "merged" ? { ended_at: now } : {}),

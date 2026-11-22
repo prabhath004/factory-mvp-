@@ -7,6 +7,7 @@ import { PanelHeader } from "@/components/panel/panel-header";
 import { pageOwnerEmail } from "@/lib/coforge/page";
 import { missionEvents, missionExecution, missionUsage, missionVerification, runnerStatus } from "@/lib/coforge/queries";
 import { CoforgeError } from "@/lib/coforge/service";
+import { effectiveMissionStatus } from "@/lib/coforge/status";
 
 export default async function MissionPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const [{ id }, query, owner] = await Promise.all([params, searchParams, pageOwnerEmail()]);
@@ -22,8 +23,9 @@ export default async function MissionPage({ params, searchParams }: { params: Pr
   ]);
   const question = execution.job?.question ?? execution.sessions.find((session) => session.question)?.question;
   const waiting = execution.mission.status === "waiting_for_user";
+  const status = effectiveMissionStatus(execution.mission.status, execution.job);
   return <>
-    <PanelHeader title={`${execution.mission.key} · ${execution.mission.goal}`} actions={<div className="flex items-center gap-2"><MissionStatusBadge status={execution.mission.status} />{!waiting && <MissionActions missionId={id} status={execution.mission.status} question={question} />}</div>} />
+    <PanelHeader title={`${execution.mission.key} · ${execution.mission.goal}`} actions={<div className="flex items-center gap-2"><MissionStatusBadge status={status} />{!waiting && <MissionActions missionId={id} status={status} question={question} />}</div>} />
     {waiting && <MissionActions missionId={id} status={execution.mission.status} question={question} />}
     {execution.mission.status === "awaiting_approval" && execution.mission.plan_json
       ? <PlanReview missionId={id} version={execution.mission.plan_version} initialPlan={execution.mission.plan_json} />
