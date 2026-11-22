@@ -17,6 +17,8 @@ const { values: args } = parseArgs({
 });
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 const GITHUB = process.env.GITHUB_URL ?? "https://github.com";
+const appName = process.env.GITHUB_APP_NAME ?? `coforge-factory-${process.env.USER ?? "local"}`;
+const appUrl = process.env.GITHUB_APP_URL ?? "http://localhost:3000";
 const ingestBase = process.env.NEON_FUNCTION_INGEST_BASE_URL?.replace(/\/$/, "");
 if (!ingestBase) throw new Error("NEON_FUNCTION_INGEST_BASE_URL is not set; it names the main ingest Function");
 
@@ -24,8 +26,8 @@ const base = `http://localhost:${args.port}`;
 let state: string | undefined = randomBytes(16).toString("hex");
 
 const manifest = {
-  name: "marshal-factory-ski043",
-  url: "https://github.com/ski043/marshal-factory",
+  name: appName,
+  url: appUrl,
   hook_attributes: { url: `${ingestBase}/webhooks/github`, active: true },
   redirect_url: `${base}/callback`,
   setup_url: `${base}/installed`,
