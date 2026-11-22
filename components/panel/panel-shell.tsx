@@ -1,6 +1,6 @@
 "use client";
 
-import { ActivityIcon, FolderGit2Icon, InboxIcon, KanbanIcon, type LucideIcon, PanelLeftIcon, ServerIcon, SettingsIcon } from "lucide-react";
+import { ActivityIcon, FolderGit2Icon, InboxIcon, KanbanIcon, ListTodoIcon, type LucideIcon, PanelLeftIcon, RocketIcon, ServerIcon, SettingsIcon } from "lucide-react";
 import { LayoutGroup, MotionConfig, motion } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -15,18 +15,20 @@ import { cn } from "@/lib/utils";
 /** The layout reads this cookie, so a reload keeps the rail collapsed. */
 export const COLLAPSED_COOKIE = "sidebar_state";
 
-type NavItem = { href: "/inbox" | "/" | "/activity" | "/machines" | "/repositories" | "/settings"; label: string; icon: LucideIcon };
+type NavItem = { href: "/missions" | "/projects" | "/inbox" | "/" | "/activity" | "/machines" | "/repositories" | "/settings"; label: string; icon: LucideIcon };
 
 /** The jobs come first, led by the inbox of jobs that need the owner. */
 const NAV: readonly (readonly NavItem[])[] = [
   [
+    { href: "/missions", label: "Missions", icon: RocketIcon },
+    { href: "/projects", label: "Projects", icon: FolderGit2Icon },
     { href: "/inbox", label: "Inbox", icon: InboxIcon },
-    { href: "/", label: "Jobs", icon: KanbanIcon },
+    { href: "/", label: "Runner jobs", icon: ListTodoIcon },
   ],
   [
     { href: "/activity", label: "Other activity", icon: ActivityIcon },
     { href: "/machines", label: "Machines", icon: ServerIcon },
-    { href: "/repositories", label: "Repositories", icon: FolderGit2Icon },
+    { href: "/repositories", label: "Repository setup", icon: KanbanIcon },
     { href: "/settings", label: "Settings", icon: SettingsIcon },
   ],
 ];
@@ -76,8 +78,8 @@ function Nav({
   return (
     <div className="flex h-full min-h-0 flex-col whitespace-nowrap">
       <div className="flex h-11 shrink-0 items-center gap-2 border-b px-3.5">
-        <span className="flex size-5 shrink-0 items-center justify-center rounded-[5px] bg-primary text-[11px] font-semibold text-primary-foreground">M</span>
-        <span className={cn("min-w-0 truncate font-medium", fade)}>Marshal Factory</span>
+        <span className="flex size-5 shrink-0 items-center justify-center rounded-[5px] bg-primary text-[11px] font-semibold text-primary-foreground">C</span>
+        <span className={cn("min-w-0 truncate font-medium", fade)}>Coforge Factory</span>
       </div>
       <nav aria-label="Panel" data-collapsed={collapsed || undefined} className="flex min-h-0 flex-1 flex-col gap-4 overflow-x-hidden overflow-y-auto px-1.5 py-2">
         {NAV.map((group) => (
