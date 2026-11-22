@@ -3,12 +3,12 @@
 ## Phase 0: Audit and contract
 
 - [x] Record upstream revision, source contract, lifecycle, telemetry, UI, license, and baseline checks in `docs/COFORGE_UPSTREAM_AUDIT.md`.
-- [ ] Define mission/project schemas, typed contracts, state transitions, and migration.
+- [x] Define mission/project schemas, typed contracts, state transitions, and migration.
 
 ### Checkpoint: foundation
 
-- [ ] Migration and schema type-check.
-- [ ] Pure contract/state tests pass.
+- [x] Migration and schema type-check.
+- [x] Pure contract/state tests pass.
 
 ## Phase 1: Source and lifecycle
 

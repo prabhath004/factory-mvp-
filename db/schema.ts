@@ -26,6 +26,7 @@ import type { NotifyKind, SlackMessageState } from "../lib/slack";
 import type { JobId, JobSource } from "../lib/sources/shapes";
 import type { StopRecord } from "../lib/stop";
 import type { TicketRecord } from "../lib/ticket-overrides";
+import type { MissionPlan, MissionStatus, MissionTaskStatus, ProjectMode } from "../lib/coforge/contracts";
 
 // Keys equal column names: the Neon Realtime Drizzle adapter requires it.
 // Token counters are float8 because int8 and numeric reach live subscribers as strings.
@@ -198,6 +199,146 @@ export const jobs = pgTable(
     uniqueIndex("jobs_codex_slot_idx").on(t.codex_slot).where(sql`${t.codex_slot} is not null`),
     check("jobs_id_check", sql`${t.id} = ${t.source}::text || ':' || ${t.external_id}`),
   ],
+);
+
+/** Owner-scoped repositories presented by the Coforge mission composer. */
+export const coforgeProjects = pgTable(
+  "coforge_projects",
+  {
+    id: text("id").primaryKey(),
+    owner_id: text("owner_id").notNull(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    mode: text("mode").$type<ProjectMode>().notNull(),
+    /** GitHub owner/name, validated against repo_settings before a mission is created. */
+    repo_url: text("repo_url").notNull(),
+    repo_default_branch: text("repo_default_branch").notNull().default("main"),
+    /** Runner-owned only. The panel and Factory API never accept or update this value. */
+    local_repo_path: text("local_repo_path"),
+    created_at: ts("created_at").notNull(),
+    updated_at: ts("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("coforge_projects_owner_slug_idx").on(t.owner_id, t.slug),
+    uniqueIndex("coforge_projects_owner_repo_idx").on(t.owner_id, t.repo_url),
+    check("coforge_projects_mode_check", sql`${t.mode} in ('greenfield', 'brownfield')`),
+  ],
+);
+
+/** A Coforge mission is the durable product state around exactly one Marshall job. */
+export const coforgeMissions = pgTable(
+  "coforge_missions",
+  {
+    id: text("id").primaryKey(),
+    key: text("key").notNull().unique().default(sql`'COF-' || nextval('coforge_mission_key_seq')::text`),
+    project_id: text("project_id")
+      .notNull()
+      .references(() => coforgeProjects.id, { onDelete: "restrict" }),
+    owner_id: text("owner_id").notNull(),
+    goal: text("goal").notNull(),
+    mode: text("mode").$type<ProjectMode>().notNull(),
+    status: text("status").$type<MissionStatus>().notNull().default("draft"),
+    plan_version: integer("plan_version").notNull().default(0),
+    plan_json: jsonb("plan_json").$type<MissionPlan>(),
+    acceptance_criteria_json: jsonb("acceptance_criteria_json").$type<string[]>().notNull().default([]),
+    selected_provider: text("selected_provider"),
+    selected_model: text("selected_model"),
+    budget_warning_usd: doublePrecision("budget_warning_usd"),
+    approved_at: ts("approved_at"),
+    approved_plan_version: integer("approved_plan_version"),
+    idempotency_key: text("idempotency_key").notNull(),
+    request_hash: text("request_hash").notNull(),
+    cancel_requested_at: ts("cancel_requested_at"),
+    created_at: ts("created_at").notNull(),
+    updated_at: ts("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("coforge_missions_owner_idempotency_idx").on(t.owner_id, t.idempotency_key),
+    index("coforge_missions_owner_updated_idx").on(t.owner_id, t.updated_at),
+    index("coforge_missions_project_updated_idx").on(t.project_id, t.updated_at),
+    check("coforge_missions_mode_check", sql`${t.mode} in ('greenfield', 'brownfield')`),
+    check("coforge_missions_status_check", sql`${t.status} in ('draft', 'planning', 'awaiting_approval', 'queued', 'running', 'waiting_for_user', 'verifying', 'pr_open', 'reviewing', 'merge_ready', 'needs_changes', 'completed', 'merged', 'failed', 'cancelled')`),
+    check("coforge_missions_plan_version_check", sql`${t.plan_version} >= 0`),
+    check("coforge_missions_approval_check", sql`(${t.approved_at} is null and ${t.approved_plan_version} is null) or (${t.approved_at} is not null and ${t.approved_plan_version} = ${t.plan_version})`),
+  ],
+);
+
+export const coforgeMissionTasks = pgTable(
+  "coforge_mission_tasks",
+  {
+    id: text("id").primaryKey(),
+    mission_id: text("mission_id")
+      .notNull()
+      .references(() => coforgeMissions.id, { onDelete: "cascade" }),
+    ordinal: integer("ordinal").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    acceptance_criteria_json: jsonb("acceptance_criteria_json").$type<string[]>().notNull().default([]),
+    status: text("status").$type<MissionTaskStatus>().notNull().default("pending"),
+    evidence_json: jsonb("evidence_json"),
+  },
+  (t) => [
+    uniqueIndex("coforge_mission_tasks_ordinal_idx").on(t.mission_id, t.ordinal),
+    check("coforge_mission_tasks_ordinal_check", sql`${t.ordinal} between 1 and 5`),
+    check("coforge_mission_tasks_status_check", sql`${t.status} in ('pending', 'active', 'done', 'blocked', 'skipped')`),
+  ],
+);
+
+export const coforgeMissionRuns = pgTable(
+  "coforge_mission_runs",
+  {
+    id: text("id").primaryKey(),
+    mission_id: text("mission_id")
+      .notNull()
+      .references(() => coforgeMissions.id, { onDelete: "cascade" }),
+    upstream_job_id: text("upstream_job_id").$type<JobId>().notNull(),
+    attempt: integer("attempt").notNull(),
+    branch_name: text("branch_name").notNull(),
+    worktree_ref: text("worktree_ref"),
+    provider: text("provider"),
+    model: text("model"),
+    status: text("status").notNull(),
+    started_at: ts("started_at"),
+    ended_at: ts("ended_at"),
+    final_commit_sha: text("final_commit_sha"),
+    pr_number: integer("pr_number"),
+    pr_url: text("pr_url"),
+    failure_reason: text("failure_reason"),
+  },
+  (t) => [uniqueIndex("coforge_mission_runs_attempt_idx").on(t.mission_id, t.attempt), index("coforge_mission_runs_job_idx").on(t.upstream_job_id)],
+);
+
+export const coforgeMissionEvents = pgTable(
+  "coforge_mission_events",
+  {
+    id: text("id").primaryKey(),
+    mission_id: text("mission_id")
+      .notNull()
+      .references(() => coforgeMissions.id, { onDelete: "cascade" }),
+    run_id: text("run_id").references(() => coforgeMissionRuns.id, { onDelete: "set null" }),
+    event_key: text("event_key").notNull().unique(),
+    kind: text("kind").notNull(),
+    stage: text("stage"),
+    payload_json: jsonb("payload_json").notNull().default({}),
+    created_at: ts("created_at").notNull(),
+  },
+  (t) => [index("coforge_mission_events_mission_at_idx").on(t.mission_id, t.created_at)],
+);
+
+/** Human answers are separate from events so the adapter can acknowledge delivery atomically. */
+export const coforgeMissionReplies = pgTable(
+  "coforge_mission_replies",
+  {
+    id: text("id").primaryKey(),
+    mission_id: text("mission_id")
+      .notNull()
+      .references(() => coforgeMissions.id, { onDelete: "cascade" }),
+    request_id: text("request_id").notNull(),
+    body: text("body").notNull(),
+    created_at: ts("created_at").notNull(),
+    acknowledged_at: ts("acknowledged_at"),
+  },
+  (t) => [uniqueIndex("coforge_mission_replies_request_idx").on(t.mission_id, t.request_id), index("coforge_mission_replies_pending_idx").on(t.mission_id, t.acknowledged_at)],
 );
 
 /**
