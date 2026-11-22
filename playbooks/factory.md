@@ -7,7 +7,11 @@ when: Resolving one Linear issue unattended on a `factory/<KEY>` branch that mar
 
 This playbook ships with marshal-factory, not with the repository: the first message names its path on this machine. It changes PStack's bundled playbooks the way a project playbook under `.agents/playbooks/` does, so open the bundled ones it extends and apply the changes below. A repository copy of this file may add notes about that repository; where it differs from this one, this one wins.
 
-No human reads this thread while it runs. The supervision panel and the pull request are the only outputs anyone sees. The branch name carries the issue key: `factory/FAC-2` works issue `FAC-2`. The issue title, body and URL are in the first message.
+No human reads this thread while it runs. The supervision panel and the pull request are the only outputs anyone sees. The branch name carries the work key: `factory/FAC-2` works Linear issue `FAC-2`, while `factory/COF-104` works Coforge mission `COF-104`. The approved issue or mission goal, plan, acceptance criteria, and URL are in the first message.
+
+## Coforge missions
+
+When the first message identifies a Coforge mission, treat its approved plan as the controlling specification. Complete its numbered tasks in order on the one mission branch and open at most one delivery pull request. Questions go through the same `waiting` stage; the owner answers in the Coforge mission workspace rather than Linear. Do not create or depend on a Linear issue, do not start another job for a task, and do not use a cloud or Modal sandbox. Coforge P0 is local-only. In all later instructions, references to “the issue” mean the approved Coforge mission when that is the source.
 
 ## Standing rules
 

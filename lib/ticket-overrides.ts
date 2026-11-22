@@ -14,7 +14,11 @@ export const RUNS_ON_LABELS: Record<Execution, string> = { local: "Local", modal
 const RUNS_ON_ALIASES: Record<Execution, readonly string[]> = { local: [], modal: ["Modal"] };
 
 /** What a ticket asks for, field by field, by the names it shows; more than one value in a field is a conflict. */
-export type SourceOverrides = { [F in keyof typeof OVERRIDE_GROUPS]: string[] } & { model?: string[] };
+export type SourceOverrides = { [F in keyof typeof OVERRIDE_GROUPS]: string[] } & {
+  model?: string[];
+  /** A source-level hard boundary: wait when local execution is unavailable instead of falling back to a cloud sandbox. */
+  localOnly?: boolean;
+};
 export const NO_OVERRIDES: SourceOverrides = { harness: [], runsOn: [], repository: [] };
 
 export type TicketOverrides = { provider?: string; model?: string; execution?: Execution; problems: string[] };

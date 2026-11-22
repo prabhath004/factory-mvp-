@@ -106,6 +106,7 @@ export function createCoforgeAdapter(load: () => CoforgeStore | Promise<CoforgeS
         model: state.model ? [state.model] : [],
         runsOn: ["Local"],
         repository: [state.repository],
+        localOnly: true,
       };
     },
 

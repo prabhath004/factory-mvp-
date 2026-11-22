@@ -148,6 +148,11 @@ assert.deepEqual(
   },
   "Local without a T3 runs on Modal when Modal can launch",
 );
+assert.deepEqual(
+  planLaunch({ ...asked([L("Local", "Runs on")]), localOnly: true }, settings, harnesses, { ...can, local: false }),
+  { kind: "wait", reason: "this runner's T3 is not running; this source requires local execution" },
+  "a local-only source never falls back to Modal",
+);
 assert.equal(plan([L("Local", "Runs on")], { local: false, modal: "there is no cloud sandbox token" }).kind, "wait", "and waits when it cannot");
 assert.equal(plan([L("Local", "Runs on")], { local: false, codexSlot: false }).kind, "launch", "a Claude Code job needs no Codex login slot to run in the cloud");
 assert.deepEqual(

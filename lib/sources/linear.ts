@@ -171,6 +171,7 @@ export type LinearDeps = {
 
 async function runtimeDeps(): Promise<LinearDeps> {
   const config = loadConfig();
+  if (!config.linearApiKey) throw new Error("Linear is not configured on this runner");
   const { db } = await import("../../db/client");
   return { client: linearClient(config.linearApiKey), db, limits: config.factory };
 }
@@ -586,8 +587,11 @@ const uploadFetch: typeof fetch = (input, init) => {
   return fetch(input, init);
 };
 
-const localizeImages = (job: { key: string }, text: string) =>
-  localizeLinearImages(text, { apiKey: loadConfig().linearApiKey, dir: join(/* turbopackIgnore: true */ ATTACHMENTS_DIR, job.key), fetch: uploadFetch });
+const localizeImages = (job: { key: string }, text: string) => {
+  const apiKey = loadConfig().linearApiKey;
+  if (!apiKey) throw new Error("Linear is not configured on this runner");
+  return localizeLinearImages(text, { apiKey, dir: join(/* turbopackIgnore: true */ ATTACHMENTS_DIR, job.key), fetch: uploadFetch });
+};
 
 const uploadFromEnv = (image: ImageFile) => {
   const key = process.env.LINEAR_API_KEY;
@@ -595,8 +599,12 @@ const uploadFromEnv = (image: ImageFile) => {
   return linearUploader(key)(image);
 };
 
+const runtimeLinear = createLinearAdapter(runtimeDeps);
+
 export const linear: SourceAdapter<"linear"> = {
-  ...createLinearAdapter(runtimeDeps),
+  ...runtimeLinear,
+  // A Coforge-only runner has no Linear intake and should not fail every polling pass.
+  ready: async () => loadConfig().linearApiKey ? runtimeLinear.ready() : [],
   file: fileFromEnv,
   uploadImage: uploadFromEnv,
   reply: replyFromEnv,

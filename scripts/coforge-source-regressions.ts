@@ -64,6 +64,7 @@ assert.deepEqual(adapter.overrides(draft!.sourceState), {
   model: ["gpt-6.1-sol"],
   runsOn: ["Local"],
   repository: ["acme/claims"],
+  localOnly: true,
 });
 
 const job = {

@@ -113,7 +113,8 @@ export const factorySchema = z
 export type FactoryLimits = z.infer<typeof factorySchema>;
 
 const configSchema = z.object({
-  linearApiKey: z.string().min(1),
+  /** Empty for Coforge-only installations; Linear operations remain unavailable without it. */
+  linearApiKey: z.string().default(""),
   ingestUrl: z.url(),
   secret: z.string().min(1),
   factory: factorySchema,

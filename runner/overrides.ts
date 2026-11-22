@@ -77,6 +77,7 @@ export function planLaunch(
     notes.push(`Cloud sandboxes cannot launch on this runner (${modal}), so it runs locally.`);
   }
   if (asked.execution === "local" && noLocal) {
+    if (overrides.localOnly) return { kind: "wait", reason: `${noLocal}; this source requires local execution` };
     if (modal) return { kind: "wait", reason: `${noLocal} and cloud sandboxes cannot launch here (${modal})` };
     execution = "modal";
     notes.push(`${noLocal[0]!.toUpperCase()}${noLocal.slice(1)}, so it runs in a cloud sandbox.`);
