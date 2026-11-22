@@ -24,14 +24,14 @@
 
 ## Phase 2: Planner and authenticated API
 
-- [ ] Implement project and mission services with ownership, validation, plan versioning, stale-approval protection, and request idempotency.
-- [ ] Add authenticated Factory project/mission/provider/runner route handlers with consistent errors.
-- [ ] Add stop, retry, reply, event, evidence, and usage projections over existing runner records.
+- [x] Implement project and mission services with ownership, validation, plan versioning, stale-approval protection, and request idempotency.
+- [x] Add authenticated Factory project/mission/provider/runner route handlers with consistent errors.
+- [x] Add stop, retry, reply, event, evidence, and usage projections over existing runner records.
 
 ### Checkpoint: API
 
 - [ ] Unauthorized, invalid, duplicate, stale, and happy-path contract tests pass.
-- [ ] Next.js type-check and lint pass.
+- [x] Next.js type-check and lint pass.
 
 ## Phase 3: Product UI
 
