@@ -6,6 +6,8 @@ import {
   projectInputSchema,
 } from "../lib/coforge/contracts";
 import { effectiveMissionStatus } from "../lib/coforge/status";
+import { developmentOwner } from "../lib/auth/development-owner";
+import { configuredLiveUpdates } from "../lib/live-mode";
 
 const plan = missionPlanSchema.parse({
   summary: "Add claim status tracking.",
@@ -55,6 +57,13 @@ assert.equal(effectiveMissionStatus("pr_open", { stage: "pr", merge_decision: { 
 assert.equal(effectiveMissionStatus("pr_open", { stage: "pr", merge_decision: { outcome: "merge" } }), "merge_ready");
 assert.equal(effectiveMissionStatus("pr_open", { stage: "pr", merge_decision: { outcome: "handover" } }), "completed");
 assert.equal(effectiveMissionStatus("pr_open", { stage: "merged", merge_decision: null }), "merged");
+
+assert.equal(developmentOwner({ nodeEnv: "development", email: "dev@example.com" }), "dev@example.com");
+assert.equal(developmentOwner({ nodeEnv: "production", email: "dev@example.com" }), null, "production can never bypass Neon Auth");
+assert.equal(developmentOwner({ nodeEnv: "development", email: "not-an-email" }), null);
+assert.equal(configuredLiveUpdates({ explicit: "off", vercelEnv: undefined }), "off");
+assert.equal(configuredLiveUpdates({ explicit: undefined, vercelEnv: "preview" }), "off");
+assert.equal(configuredLiveUpdates({ explicit: undefined, vercelEnv: undefined }), "on");
 
 assert.deepEqual(
   projectInputSchema.parse({ name: "Claims", mode: "brownfield", repo: "acme/claims" }),

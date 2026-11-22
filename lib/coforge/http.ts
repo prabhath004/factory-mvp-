@@ -2,11 +2,14 @@ import { auth } from "@/lib/auth/server";
 import { isOwner } from "@/lib/auth/owner";
 import { CoforgeError } from "./service";
 import { ZodError } from "zod";
+import { developmentOwner } from "@/lib/auth/development-owner";
 
 export const apiError = (code: string, message: string, status: number, details?: unknown) =>
   Response.json({ error: { code, message, ...(details === undefined ? {} : { details }) } }, { status });
 
 export async function ownerEmail() {
+  const localOwner = developmentOwner();
+  if (localOwner) return localOwner;
   const user = (await auth.getSession()).data?.user;
   if (!user) throw new ApiAuthError("AUTHENTICATION_REQUIRED", "Sign in to use Factory APIs.", 401);
   if (!isOwner(user)) throw new ApiAuthError("OWNER_REQUIRED", "Only the factory owner can use Factory APIs.", 403);

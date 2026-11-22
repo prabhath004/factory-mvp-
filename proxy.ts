@@ -1,12 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isOwner } from "@/lib/auth/owner";
 import { auth } from "@/lib/auth/server";
+import { developmentOwner } from "@/lib/auth/development-owner";
 
 const LOGIN = "/auth/sign-in";
 // The SDK middleware re-mints the cached session cookie that getSession alone cannot set from a proxy.
 const refreshSession = auth.middleware({ loginUrl: LOGIN });
 
 export async function proxy(request: NextRequest) {
+  if (developmentOwner()) return NextResponse.next();
   const { data } = await auth.getSession();
   const user = data?.user;
   if (isOwner(user)) return refreshSession(request);
