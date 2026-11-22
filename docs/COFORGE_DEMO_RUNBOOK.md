@@ -101,4 +101,3 @@ The repository's pure Coforge regressions, TypeScript check, and lint can run wi
 The complete browser and delivery demo requires a real Neon branch, verified owner session, local
 T3 provider, target checkout, and GitHub App installation. When any is absent, report the step as
 unverified; do not replace it with fixtures or claim an end-to-end pass.
-

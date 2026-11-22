@@ -144,4 +144,3 @@ approval.
   reports “Not reported” and does not estimate.
 - **Build fails before page collection:** set `NEON_AUTH_COOKIE_SECRET`; a valid database/auth
   environment is required for a full production build and browser test.
-
