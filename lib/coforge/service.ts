@@ -209,6 +209,10 @@ async function replaceTasks(
       title: task.title,
       description: task.description,
       acceptance_criteria_json: task.acceptanceCriteria,
+      capability: task.capability,
+      agent_policy: task.agentPolicy,
+      depends_on_json: task.dependsOn,
+      skills_json: task.skills,
       status: "pending" as const,
     })),
   );

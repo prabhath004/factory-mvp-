@@ -26,7 +26,7 @@ import type { NotifyKind, SlackMessageState } from "../lib/slack";
 import type { JobId, JobSource } from "../lib/sources/shapes";
 import type { StopRecord } from "../lib/stop";
 import type { TicketRecord } from "../lib/ticket-overrides";
-import type { MissionPlan, MissionStatus, MissionTaskStatus, ProjectMode } from "../lib/coforge/contracts";
+import type { MissionAgentPolicy, MissionCapability, MissionPlan, MissionStatus, MissionTaskStatus, ProjectMode } from "../lib/coforge/contracts";
 
 // Keys equal column names: the Neon Realtime Drizzle adapter requires it.
 // Token counters are float8 because int8 and numeric reach live subscribers as strings.
@@ -274,6 +274,13 @@ export const coforgeMissionTasks = pgTable(
     title: text("title").notNull(),
     description: text("description").notNull(),
     acceptance_criteria_json: jsonb("acceptance_criteria_json").$type<string[]>().notNull().default([]),
+    capability: text("capability").$type<MissionCapability>().notNull().default("implementation"),
+    agent_policy: text("agent_policy").$type<MissionAgentPolicy>().notNull().default("primary"),
+    depends_on_json: jsonb("depends_on_json").$type<number[]>().notNull().default([]),
+    skills_json: jsonb("skills_json").$type<string[]>().notNull().default([]),
+    thread_id: text("thread_id"),
+    provider: text("provider"),
+    model: text("model"),
     status: text("status").$type<MissionTaskStatus>().notNull().default("pending"),
     evidence_json: jsonb("evidence_json"),
   },
@@ -281,6 +288,8 @@ export const coforgeMissionTasks = pgTable(
     uniqueIndex("coforge_mission_tasks_ordinal_idx").on(t.mission_id, t.ordinal),
     check("coforge_mission_tasks_ordinal_check", sql`${t.ordinal} between 1 and 5`),
     check("coforge_mission_tasks_status_check", sql`${t.status} in ('pending', 'active', 'done', 'blocked', 'skipped')`),
+    check("coforge_mission_tasks_capability_check", sql`${t.capability} in ('discovery', 'implementation', 'verification', 'delivery')`),
+    check("coforge_mission_tasks_agent_policy_check", sql`${t.agent_policy} in ('primary', 'specialist', 'independent_reviewer')`),
   ],
 );
 
