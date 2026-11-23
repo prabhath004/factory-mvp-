@@ -37,8 +37,11 @@ if (existsSync(envPath)) process.loadEnvFile(envPath);
 if (ensureLocalRunnerConfig(CONFIG_PATH)) console.log(`created   ${CONFIG_PATH}`);
 
 // launchd starts with a bare PATH, so carry the directories of every tool the runner calls.
-const tools = ["bun", "git"].map(which);
-execFileSync(tools[0]!, [join(root, "scripts/install-local-runtime.ts")], { cwd: root, stdio: "inherit" });
+const bun = which("bun");
+const git = which("git");
+const codex = process.env.CODEX_CLI_PATH ?? which("codex");
+const tools = [bun, git, codex];
+execFileSync(bun, [join(root, "scripts/install-local-runtime.ts")], { cwd: root, stdio: "inherit" });
 // T3 exports its CLI path only to sessions it starts; the daemon gets it from here.
 // T3 installs its launcher at ~/.t3/bin/t3 and puts it on the login shell's PATH; launchd has neither.
 const t3 = process.env.T3CODE_CLI_PATH ?? [join(homedir(), ".t3/bin/t3")].find(existsSync) ?? which("t3");
@@ -50,13 +53,14 @@ const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <dict>
   <key>Label</key><string>${LABEL}</string>
   <key>ProgramArguments</key>
-  <array><string>${escape(tools[0]!)}</string><string>${escape(join(root, "runner/index.ts"))}</string></array>
+  <array><string>${escape(bun)}</string><string>${escape(join(root, "runner/index.ts"))}</string></array>
   <key>WorkingDirectory</key><string>${escape(root)}</string>
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key><string>${escape(path)}</string>
     <key>HOME</key><string>${escape(homedir())}</string>
     <key>T3CODE_CLI_PATH</key><string>${escape(t3)}</string>
+    <key>CODEX_CLI_PATH</key><string>${escape(codex)}</string>
   </dict>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>

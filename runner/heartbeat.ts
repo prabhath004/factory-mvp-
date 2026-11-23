@@ -9,7 +9,7 @@ import { machines } from "../db/schema";
 import { loadConfig } from "../lib/config";
 import { UNKNOWN, type Heartbeat, type Inventory } from "../lib/machine";
 import { sandboxReadiness } from "../lib/sandbox";
-import { connectStatus, readHarnesses, readProjects, readT3Runtime } from "../lib/t3-state";
+import { connectStatus, readLiveHarnesses, readProjects, readT3Runtime } from "../lib/t3-state";
 import { baseImageBuild } from "./base-image";
 import { message, withTimeout } from "./queue";
 
@@ -101,7 +101,7 @@ export function inventoryCollectors(): InventoryCollectors {
           origin: await text("git", ["-C", path, "remote", "get-url", "origin"]).then((url) => parseOrigin(url) ?? UNKNOWN, () => UNKNOWN),
         })),
       ),
-    harnesses: async () => readHarnesses(),
+    harnesses: () => readLiveHarnesses(),
     sandbox: async () => {
       const imageBuild = baseImageBuild();
       return { ...sandboxReadiness(factory.sandbox), ...(imageBuild && { imageBuild }) };

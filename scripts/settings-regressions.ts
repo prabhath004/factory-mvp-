@@ -12,7 +12,7 @@ const { jobs, settings } = await import("../db/schema");
 const { DEFAULT_MODEL, DEFAULT_PROVIDER } = await import("../lib/harness");
 const { imageOutdated, rebuildText, reportedDrift, reportedHarnesses, reportedSandbox, sandboxLogin } = await import("../lib/machine");
 const { readSettings, saveSettings, SETTINGS_ID, writeSettings } = await import("../lib/settings");
-const { readHarnesses } = await import("../lib/t3-state");
+const { mergeLiveModels, readHarnesses } = await import("../lib/t3-state");
 const { claimLaunch, effectiveHarness, releaseLaunch } = await import("../runner/ops");
 const { linearJob } = await import("./fixtures");
 
@@ -55,6 +55,20 @@ assert.deepEqual(
 );
 assert.throws(() => readHarnesses(join(fixtures, "broken")), "a settings file of the wrong shape throws, so the inventory says unknown");
 assert.throws(() => readHarnesses(join(fixtures, "missing")), "a missing settings file throws");
+
+assert.deepEqual(
+  mergeLiveModels(readHarnesses(join(fixtures, "full")), "codex", [
+    { slug: "gpt-6.2-sol", name: "GPT-6.2-Sol" },
+    { slug: "gpt-6-luna", name: "GPT-6-Luna" },
+    { slug: "gpt-5.6-luna", name: "GPT-5.6-Luna" },
+  ]).find((entry) => entry.id === "codex")?.models,
+  [
+    { slug: "gpt-6.2-sol", name: "GPT-6.2-Sol" },
+    { slug: "gpt-6-luna", name: "GPT-6-Luna" },
+    { slug: "gpt-5.6-luna", name: "GPT-5.6-Luna" },
+  ],
+  "a provider's live model catalog replaces its stale manifest list in the order the provider reports",
+);
 
 const harness = (id: string, enabled = true, models = ["m1"]): Harness => ({
   id,

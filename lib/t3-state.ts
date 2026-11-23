@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, join } from "node:path";
@@ -138,6 +138,94 @@ export function readHarnesses(userdataDir = t3UserdataDir()): Harness[] {
       models: (manifest.currentModels[instance.driver] ?? []).map((slug) => ({ slug, name: nameOf.get(slug) || slug })),
     };
   });
+}
+
+type HarnessModel = Harness["models"][number];
+
+/** Replaces a driver's static manifest models with the live provider catalog. */
+export function mergeLiveModels(harnesses: readonly Harness[], driver: string, models: readonly HarnessModel[]): Harness[] {
+  return harnesses.map((harness) => (harness.driver === driver ? { ...harness, models: [...models] } : harness));
+}
+
+const codexModelList = z.object({
+  id: z.literal(2),
+  result: z.object({
+    data: z.array(z.looseObject({ model: z.string(), displayName: z.string().optional() })),
+  }),
+});
+
+function parseCodexModels(output: string): HarnessModel[] {
+  for (const line of output.split("\n")) {
+    try {
+      const response = codexModelList.safeParse(JSON.parse(line));
+      if (response.success) return response.data.result.data.map((model) => ({ slug: model.model, name: model.displayName ?? model.model }));
+    } catch {}
+  }
+  throw new Error("Codex did not return a model/list response");
+}
+
+/** Reads the same live Codex catalog its model picker uses. */
+export function readCodexModels(codex = process.env.CODEX_CLI_PATH ?? "codex"): Promise<HarnessModel[]> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(codex, ["app-server", "--stdio"], { stdio: ["pipe", "pipe", "ignore"] });
+    let output = "";
+    let settled = false;
+    const succeed = (models: HarnessModel[]) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.kill();
+      resolve(models);
+    };
+    const fail = (error: unknown) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.kill();
+      reject(error);
+    };
+    const timer = setTimeout(() => {
+      fail(new Error("Codex model/list timed out"));
+    }, CLI_TIMEOUT_MS);
+    child.on("error", fail);
+    child.stdout.setEncoding("utf8");
+    child.stdout.on("data", (chunk: string) => {
+      output += chunk;
+      if (output.length > 16 * 1024 * 1024) return fail(new Error("Codex model/list response was too large"));
+      try {
+        succeed(parseCodexModels(output));
+      } catch {}
+    });
+    child.on("close", () => {
+      if (settled) return;
+      try {
+        succeed(parseCodexModels(output));
+      } catch (error) {
+        fail(error);
+      }
+    });
+    child.stdin.write(
+      [
+        { id: 1, method: "initialize", params: { clientInfo: { name: "marshal-factory", title: "Marshal Factory", version: "0.1.0" } } },
+        { method: "initialized" },
+        { id: 2, method: "model/list", params: { includeHidden: false, limit: 100 } },
+      ]
+        .map((message) => JSON.stringify(message))
+        .join("\n") + "\n",
+    );
+  });
+}
+
+/** Uses live provider models when available and the T3 manifest as a safe fallback. */
+export async function readLiveHarnesses(userdataDir = t3UserdataDir()): Promise<Harness[]> {
+  const harnesses = readHarnesses(userdataDir);
+  if (!harnesses.some((harness) => harness.driver === "codex")) return harnesses;
+  try {
+    const models = await readCodexModels();
+    return models.length > 0 ? mergeLiveModels(harnesses, "codex", models) : harnesses;
+  } catch {
+    return harnesses;
+  }
 }
 
 const connectJson = z.looseObject({ authenticated: z.boolean() });
