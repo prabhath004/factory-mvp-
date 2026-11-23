@@ -15,6 +15,7 @@ import { DEFAULT_EXECUTION, EXECUTIONS, type Execution } from "@/lib/execution";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, harnessLabel, trackingOf, type Harness, type Tracking } from "@/lib/harness";
 import { componentName, IMAGE_COMPONENTS, rebuildText, reportedDrift, reportedHarnesses, reportedSandbox, reportedSlack, sandboxLogin, type SandboxReadiness } from "@/lib/machine";
 import { NotificationsCard } from "./notifications-card";
+import { ComposioCard } from "./composio-card";
 import { useFeed, type Feed } from "./sealed";
 import { PanelFooter, PanelHeader } from "./panel-header";
 import { SettingsSection } from "./settings-section";
@@ -235,7 +236,9 @@ function Current({ saved, harnesses }: { saved: SettingsRow | null; harnesses: r
   );
 }
 
-export function SettingsForm({ machines, saved, notifications }: { machines: Feed<MachineRow>; saved: SettingsRow | null; notifications: NotificationSettingsRow | null }) {
+type ComposioSettings = { configured: boolean; toolkits: { id: "slack" | "jira" | "notion"; label: string; tools: readonly string[] }[]; connections: { id: string; toolkit: string; status: string; scopes_metadata: { tools: string[] } }[] };
+
+export function SettingsForm({ machines, saved, notifications, composio }: { machines: Feed<MachineRow>; saved: SettingsRow | null; notifications: NotificationSettingsRow | null; composio: ComposioSettings }) {
   const router = useRouter();
   const { rows, status } = useFeed(machines, "/api/live/machines");
   const now = useNow(CLOCK_TICK_MS);
@@ -400,6 +403,7 @@ export function SettingsForm({ machines, saved, notifications }: { machines: Fee
             </Card>
           </SettingsSection>
           <NotificationsCard saved={notifications} slack={slack} />
+          <ComposioCard {...composio} />
         </div>
       </div>
       <PanelFooter status={status} />

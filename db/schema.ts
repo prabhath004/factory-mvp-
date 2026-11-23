@@ -350,6 +350,27 @@ export const coforgeMissionReplies = pgTable(
   (t) => [uniqueIndex("coforge_mission_replies_request_idx").on(t.mission_id, t.request_id), index("coforge_mission_replies_pending_idx").on(t.mission_id, t.acknowledged_at)],
 );
 
+/** User-scoped external accounts. Credentials remain in Composio; only references live here. */
+export const integrationConnections = pgTable(
+  "integration_connections",
+  {
+    id: text("id").primaryKey(),
+    owner_id: text("owner_id").notNull(),
+    provider: text("provider").notNull(),
+    toolkit: text("toolkit").notNull(),
+    connection_ref: text("connection_ref").notNull(),
+    status: text("status").notNull(),
+    scopes_metadata: jsonb("scopes_metadata").$type<{ tools: string[] }>().notNull().default({ tools: [] }),
+    created_at: ts("created_at").notNull(),
+    updated_at: ts("updated_at").notNull(),
+  },
+  (t) => [
+    uniqueIndex("integration_connections_owner_ref_idx").on(t.owner_id, t.provider, t.connection_ref),
+    index("integration_connections_owner_toolkit_idx").on(t.owner_id, t.toolkit),
+    check("integration_connections_provider_check", sql`${t.provider} in ('composio')`),
+  ],
+);
+
 /**
  * Who holds each Codex login slot: a job or an onboarding agent run. The slot is the primary key,
  * so one holder at a time across both. Triggers from migration 0032 keep it in step with
