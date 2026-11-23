@@ -12,10 +12,23 @@ type HookEntry = {
 
 /** Ours, per event, in order. PostToolUse takes every tool so the reporter can send usage snapshots. */
 export const localScreenshotDir = (root: string) => join(root, ".local", "browser");
+export type LocalBrowserRuntime = { command: string; executablePath: string };
 
-const localBrowserServer = (root: string) => ({
-  command: "playwright-mcp",
-  args: ["--headless", "--isolated", "--browser", "chromium", "--output-dir", localScreenshotDir(root), "--proxy-server", "http://127.0.0.1:9", "--proxy-bypass", "localhost,127.0.0.1,[::1]"],
+const localBrowserServer = (root: string, runtime?: LocalBrowserRuntime) => ({
+  command: runtime?.command ?? "playwright-mcp",
+  args: [
+    "--headless",
+    "--isolated",
+    "--browser",
+    "chrome",
+    ...(runtime ? ["--executable-path", runtime.executablePath] : []),
+    "--output-dir",
+    localScreenshotDir(root),
+    "--proxy-server",
+    "http://127.0.0.1:9",
+    "--proxy-bypass",
+    "localhost,127.0.0.1,[::1]",
+  ],
 });
 
 function hooksFor(root: string, screenshotDir: string): Record<string, HookEntry[]> {
@@ -52,13 +65,13 @@ export function withHooks(settings: Json, root: string, screenshotDir = localScr
 export const reportServer = (root: string) => ({ command: "bun", args: [join(root, "mcp/factory-report.ts")] });
 
 /** Claude Code's hooks report its stages, so its server only validates. */
-export function withServer(mcp: Json, root: string, screenshotDir = localScreenshotDir(root), browser = true): Json {
+export function withServer(mcp: Json, root: string, screenshotDir = localScreenshotDir(root), browser = true, browserRuntime?: LocalBrowserRuntime): Json {
   return {
     ...mcp,
     mcpServers: {
       ...((mcp.mcpServers as Json) ?? {}),
       [REPORT_SERVER]: { ...reportServer(root), env: { FACTORY_REPORTER: "hook", FACTORY_SCREENSHOT_DIR: screenshotDir } },
-      ...(browser && { playwright: localBrowserServer(root) }),
+      ...(browser && { playwright: localBrowserServer(root, browserRuntime) }),
     },
   };
 }

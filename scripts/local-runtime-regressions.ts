@@ -39,9 +39,14 @@ assert.deepEqual(
 );
 
 const screenshotDir = localScreenshotDir("/work/marshal-factory");
-const wired = withServer({}, "/work/marshal-factory") as { mcpServers: Record<string, { command: string; args?: string[]; env?: Record<string, string> }> };
-assert.equal(wired.mcpServers.playwright?.command, "playwright-mcp");
+const wired = withServer({}, "/work/marshal-factory", screenshotDir, true, {
+  command: "/Users/demo/.bun/bin/playwright-mcp",
+  executablePath: "/Users/demo/Library/Caches/ms-playwright/chromium/chrome",
+}) as { mcpServers: Record<string, { command: string; args?: string[]; env?: Record<string, string> }> };
+assert.equal(wired.mcpServers.playwright?.command, "/Users/demo/.bun/bin/playwright-mcp");
 assert.ok(wired.mcpServers.playwright?.args?.includes(screenshotDir));
+assert.ok(wired.mcpServers.playwright?.args?.includes("/Users/demo/Library/Caches/ms-playwright/chromium/chrome"));
+assert.ok(!wired.mcpServers.playwright?.args?.includes("chromium"), "Playwright MCP accepts chrome plus an explicit Chromium executable, not chromium as a browser name");
 assert.equal(wired.mcpServers["factory-report"]?.env?.FACTORY_SCREENSHOT_DIR, screenshotDir);
 assert.match(JSON.stringify(withHooks({}, "/work/marshal-factory")), /FACTORY_SCREENSHOT_DIR/);
 

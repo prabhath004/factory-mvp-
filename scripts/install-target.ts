@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +9,15 @@ import { json, withHooks, withServer, type Json } from "../lib/target-wiring";
 // Re-running converges on the same files and merges with what the repo already has.
 
 const root = fileURLToPath(new URL("..", import.meta.url)).replace(/\/$/, "");
+
+function browserRuntime() {
+  const npmRoot = execFileSync("npm", ["root", "--global"], { encoding: "utf8" }).trim();
+  const command = join(npmRoot, "@playwright", "mcp", "cli.js");
+  const playwrightModule = join(npmRoot, "@playwright", "mcp", "node_modules", "playwright");
+  const executablePath = execFileSync("node", ["-e", `console.log(require(${JSON.stringify(playwrightModule)}).chromium.executablePath())`], { encoding: "utf8" }).trim();
+  if (!existsSync(command) || !existsSync(executablePath)) throw new Error("Playwright MCP runtime is missing; run bun scripts/install-local-runtime.ts");
+  return { command, executablePath };
+}
 
 const readJson = (path: string): Json =>
   existsSync(path) ? (JSON.parse(readFileSync(path, "utf8")) as Json) : {};
@@ -45,7 +55,7 @@ if (!existsSync(configPath)) {
 const settingsPath = join(target, ".claude/settings.json");
 write(settingsPath, json(withHooks(readJson(settingsPath), root)));
 const mcpPath = join(target, ".mcp.json");
-write(mcpPath, json(withServer(readJson(mcpPath), root)));
+write(mcpPath, json(withServer(readJson(mcpPath), root, undefined, true, browserRuntime())));
 write(
   join(target, ".agents/playbooks/factory.md"),
   readFileSync(join(root, "playbooks/factory.md"), "utf8"),
