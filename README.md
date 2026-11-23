@@ -180,11 +180,13 @@ bun scripts/install-runner.ts
 tail -f ~/Library/Logs/marshal-factory/runner.log
 ```
 
-This installs the LaunchAgent `com.marshal-factory.runner`. It starts at login and restarts if it exits. Within a minute the log shows `realtime` `live` and a `heartbeat`, and your Mac appears under **Machines** in the panel. The runner still needs a repo to work in, which the next section adds.
+This installs the LaunchAgent `com.marshal-factory.runner`, the pinned PStack release, the Coforge execution skills for Codex and Claude Code, and the pinned local browser runtime. It starts at login and restarts if it exits. Within a minute the log shows `realtime` `live` and a `heartbeat`, and your Mac appears under **Machines** in the panel. Selecting a repository in the panel now creates its managed local checkout automatically.
 
-## Add your repo
+## Wire an existing checkout (optional)
 
-A target repo is any git repo whose `origin` is on GitHub and whose default branch is `main`. The GitHub App must be installed on it.
+The normal Coforge path is **Repository setup → Add repository** in the panel. The runner clones the selected GitHub App-authorized repository under `~/.local/share/marshal-factory/repos`, adds it to its config, and registers it with T3. You do not need to clone it first.
+
+Use the legacy installer below only when you want the factory to reuse an existing checkout or need reporter wiring committed into a repository:
 
 ```sh
 bun scripts/install-target.ts ~/code/my-app
@@ -212,11 +214,11 @@ Per repo, a default harness and place apply when the ticket has no Harness or Ru
 
 To add a repo, click **Add repository** on the Repositories page and pick one of the repos the GitHub App can reach. **Grant access to more repositories** opens the App's installation settings when the one you want is missing. The factory then onboards it without you:
 
-1. If the repo's `main` has a `.factory/setup.json`, the factory uses it. Otherwise an agent reads the repo in a Modal sandbox, writes that setup recipe, runs the setup and every check until they pass, and opens a pull request titled **Add the factory setup recipe**. Merge it when it looks right.
+1. A local runner creates or reuses a managed checkout and registers it with T3. If the repo's `main` has a `.factory/setup.json`, the factory uses it; otherwise local onboarding discovers its package scripts. A runner configured for cloud execution may instead use the existing Modal recipe/image workflow.
 2. If the recipe names secrets the checks need, the repo shows **Needs input** with each name and what it is for. Paste the values in the repo's detail pane, or, when the panel has no Modal token, run the command it shows on the runner Mac (`bun scripts/repo-secret.ts owner/name NAME`), which asks for the value without echoing it. Values go straight to a Modal secret for that repo and are never stored by the factory.
 3. The factory builds a warm sandbox image with the repo cloned and set up, and the repo turns **Ready**. Its Modal jobs start from that image, and a push to `main` that changes the recipe or a lockfile rebuilds it in the background.
 
-The new repo also gets its child in the **Repository** label group. A repo you also want to run locally still needs `bun scripts/install-target.ts` on the runner Mac ([Add your repo](#add-your-repo)). [docs/operations.md](docs/operations.md#onboarding-a-repository) has the details.
+When Linear is configured, the new repo also gets its child in the **Repository** label group. Coforge itself does not require Linear or Modal. [docs/operations.md](docs/operations.md#onboarding-a-repository) has the advanced details.
 
 The Jobs page and the Inbox have a repository filter in the header. It is kept in `?repo=owner/name` and remembered for the next visit. Cards and rows show their repo once more than one repo has jobs.
 

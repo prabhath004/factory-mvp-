@@ -2,7 +2,8 @@
 
 This guide adds the Coforge prompt-first workflow to the existing Marshall installation. Coforge
 missions do not require Linear. They do require Neon, Neon Auth, the local Bun runner, T3 Code, an
-enabled local coding harness, a GitHub App, and a local checkout of every target repository.
+enabled local coding harness, and a GitHub App. The runner now creates and manages target
+checkouts automatically when a repository is selected in the panel.
 
 ## P0 boundaries
 
@@ -52,11 +53,25 @@ Apply the Coforge schema, including migration `0040_coforge_missions.sql`:
 bun run db:migrate
 ```
 
-## 2. Configure a local-only runner
+## 2. Install the local runner and agent runtime
 
-Create `~/.config/marshal-factory/config.json`. `secret` must equal `FACTORY_INGEST_SECRET`, and
-`ingestUrl` is `NEON_FUNCTION_INGEST_BASE_URL` with `/ingest` appended. A minimal Coforge-only
-configuration is:
+Run the installer once from the factory checkout:
+
+```sh
+bun scripts/install-runner.ts
+```
+
+The installer does all local runtime setup that used to be manual:
+
+- creates `~/.config/marshal-factory/config.json` from `.env.local` when it is absent;
+- installs the persistent macOS runner;
+- checks out the pinned PStack release and enables it for both Codex and Claude Code;
+- installs the four Coforge skills (`coforge-brownfield`, `coforge-task`,
+  `coforge-browser-verification`, and `coforge-delivery`) for both harnesses; and
+- installs the pinned Playwright MCP browser runtime.
+
+The generated config uses `FACTORY_INGEST_SECRET` and `NEON_FUNCTION_INGEST_BASE_URL`. You may edit
+the non-secret runner defaults afterward. A minimal Coforge-only configuration looks like:
 
 ```json
 {
@@ -65,7 +80,7 @@ configuration is:
   "factory": {
     "maxInFlight": 1,
     "tickSeconds": 30,
-    "repos": ["acme/claims"],
+    "repos": [],
     "provider": "codex",
     "model": "your-enabled-model"
   }
@@ -76,24 +91,25 @@ configuration is:
 upstream Modal support is configured for Linear jobs, a Coforge source override carries a hard
 `localOnly` constraint.
 
-Protect the file:
+The installer protects the file with mode `0600`. If you create it yourself, run:
 
 ```sh
 chmod 600 ~/.config/marshal-factory/config.json
 ```
 
-## 3. Wire each target repository
+## 3. Add a target repository
 
-The GitHub App must be installed on the repository. The repository must have an `origin` remote and
-an `origin/main` branch. Run from this factory checkout:
+Install the factory's GitHub App on the repository, then use **Repository setup → Add repository**
+in the panel. That selection is the product input. Do not clone the repository yourself and do not
+put a filesystem path into the panel.
 
-```sh
-bun scripts/install-target.ts /absolute/path/to/claims
-```
+The runner receives the repository onboarding intent, authenticates as the GitHub App, clones the
+`main` branch to `~/.local/share/marshal-factory/repos/<owner>/<repo>`, records that checkout in its
+private config, and registers it as a T3 project. If the config already names a checkout whose
+`origin` matches the repository, the runner safely reuses it instead.
 
-Commit and push the generated reporter hooks, MCP configuration, and factory playbook to the target
-repository's `main`. The installer also adds the repository to `factory.repos`. Restarting the
-runner registers the local checkout in the panel.
+Repositories already wired with `bun scripts/install-target.ts` continue to work, but that command
+is a compatibility/advanced operation rather than the normal add-repository flow.
 
 ## 4. Start the panel and runner
 
@@ -103,10 +119,9 @@ For local panel development:
 bun run dev
 ```
 
-Install the persistent macOS runner:
+The runner was installed in step 2. Its log is available with:
 
 ```sh
-bun scripts/install-runner.ts
 tail -f ~/Library/Logs/marshal-factory/runner.log
 ```
 
@@ -134,12 +149,15 @@ approval.
 
 ## Troubleshooting
 
-- **Queued with no claim:** verify the runner is online, T3 is up, the repository appears in
-  `factory.repos`, and the exact repo has a local checkout. Coforge waits instead of using Modal.
+- **Repository stays Analyzing:** inspect the runner log for `managed-repo` or `onboarding` errors.
+  Verify the GitHub App is installed on the repository and its default branch is `main`.
+- **Queued with no claim:** verify the runner is online, T3 is up, and the repository is Ready.
+  Coforge waits instead of using Modal.
 - **No provider choices:** wait for a fresh machine inventory or restart the runner. Provider/model
   input is validated against the inventory actually reported by T3.
-- **No stages or evidence:** confirm the target repo's generated hook files are on `origin/main`,
-  and the runner config `secret` matches `FACTORY_INGEST_SECRET`.
+- **No stages or evidence:** confirm the runner config `secret` matches
+  `FACTORY_INGEST_SECRET`; for a legacy wired repository, also confirm its generated hook files are
+  on `origin/main`.
 - **No cost:** this is expected when a provider/model does not expose priced telemetry. The panel
   reports “Not reported” and does not estimate.
 - **Build fails before page collection:** set `NEON_AUTH_COOKIE_SECRET`; a valid database/auth

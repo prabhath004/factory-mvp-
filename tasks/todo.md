@@ -53,8 +53,18 @@
 - [x] Run focused tests, full available regressions, lint, build/type-check, dependency audit, and secret scan. (Credentialed regressions are blocked; dependency audit findings remain for the security upgrade.)
 - [x] Review the full diff for correctness, security, accessibility, and unnecessary complexity.
 
+## Phase 5: Local product runtime
+
+- [x] Install pinned PStack for both Codex and Claude Code from the runner installer.
+- [x] Install the four Coforge execution skills for both local harnesses.
+- [x] Clone GitHub App-authorized repositories into the managed repository directory automatically.
+- [x] Register managed checkouts with both the runner and T3.
+- [x] Complete repository onboarding locally without requiring Modal or Linear.
+- [x] Install the pinned Playwright MCP runtime and route browser evidence to the factory reporter.
+- [x] Verify the live owner, repository, project, provider, and runner API paths.
+
 ### Checkpoint: complete
 
-- [ ] Every implemented P0 behavior has test evidence. (Database/API/browser/live-run behaviors require the credentialed environment.)
+- [ ] Complete one user-directed mission through a verified pull request; infrastructure and live API paths are verified.
 - [x] External credential-dependent validation is explicitly distinguished from local verification.
 - [x] Known limitations and the upstream security upgrade are handed off.
