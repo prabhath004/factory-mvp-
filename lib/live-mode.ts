@@ -1,6 +1,4 @@
-export function configuredLiveUpdates({ explicit, vercelEnv }: { explicit?: string; vercelEnv?: string }) {
-  return explicit ?? (vercelEnv === "preview" ? "off" : "on");
-}
+export { configuredLiveUpdates } from "./live-mode-config";
 
 // next.config.ts turns this off in Vercel preview builds, whose Neon branches have no Realtime config the build can read.
 export const liveUpdates = process.env.NEXT_PUBLIC_LIVE_UPDATES !== "off";

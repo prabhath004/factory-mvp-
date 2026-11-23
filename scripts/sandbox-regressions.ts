@@ -222,7 +222,11 @@ try {
   assert.match(sbA.files.get("/root/.claude/settings.json")!, /bun \\"\/opt\/marshal-factory\/hooks\/report\.ts\\"/, "user-level hooks point at the sandbox's factory");
   assert.doesNotMatch(sbA.files.get("/root/.claude/settings.json")!, /hooks\/budget\.ts/, "and wire no budget hook");
   assert.equal(JSON.parse(sbA.files.get("/root/.claude.json")!).mcpServers["factory-report"].args[0], "/opt/marshal-factory/mcp/factory-report.ts");
-  assert.deepEqual(JSON.parse(sbA.files.get("/root/.claude.json")!).mcpServers["factory-report"].env, { FACTORY_REPORTER: "hook" }, "Claude Code's hooks report its stages, so its server only validates");
+  assert.deepEqual(
+    JSON.parse(sbA.files.get("/root/.claude.json")!).mcpServers["factory-report"].env,
+    { FACTORY_REPORTER: "hook", FACTORY_SCREENSHOT_DIR: "/work/browser" },
+    "Claude Code's hooks report stages and read browser evidence from the sandbox output directory",
+  );
   assert.deepEqual(JSON.parse(sbA.files.get("/root/.claude.json")!).mcpServers.playwright, browserServer, "Claude Code gets the headless browser server");
   assert.ok(sbA.files.get("/root/.codex/config.toml")!.includes(`[mcp_servers.playwright]\ncommand = "playwright-mcp"\nargs = ${JSON.stringify(browserServer.args)}\n`), "Codex gets the headless browser server");
   const argvs = sbA.execs.map((e) => e.argv.join(" "));

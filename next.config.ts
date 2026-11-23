@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { configuredLiveUpdates } from "./lib/live-mode";
+import { configuredLiveUpdates } from "./lib/live-mode-config";
 
 const nextConfig: NextConfig = {
   agentRules: false,
