@@ -6,7 +6,7 @@ when: Executing an approved Factory job unattended on a `factory/<KEY>` branch c
 
 This playbook ships with marshal-factory, not with the repository: the first message names its path on this machine. A repository copy may add repository-specific notes; where it differs from this file, this file wins.
 
-The runtime has the Coforge skills `coforge-brownfield`, `coforge-task`, `coforge-browser-verification`, and `coforge-delivery`, plus the pinned PStack plugin. Use the four Coforge skills for the mission lifecycle. Use PStack's actual installed skills where applicable: `tdd` for a cheap regression target, `fix-ci`, `fix-merge-conflicts`, `make-pr-easy-to-review`, `show-me-your-work`, and `babysit`. Do not look for the obsolete `feature`, `bug-fix`, or `opening-a-pr` names; PStack 0.9.69 does not ship them.
+The runtime has the Coforge skills `coforge-orchestrator`, `coforge-brownfield`, `coforge-task`, `coforge-browser-verification`, and `coforge-delivery`, plus the pinned PStack plugin. Start with `coforge-orchestrator`, then use the task's declared Coforge skills. Use PStack's actual installed skills where applicable: `tdd` for a cheap regression target, `fix-ci`, `fix-merge-conflicts`, `make-pr-easy-to-review`, `show-me-your-work`, and `babysit`. Do not look for the obsolete `feature`, `bug-fix`, or `opening-a-pr` names; PStack 0.9.69 does not ship them.
 
 No human reads this thread while it runs. The supervision panel and the pull request are the only outputs anyone sees. The branch name carries the work key: `factory/FAC-2` works Linear issue `FAC-2`, while `factory/COF-104` works Coforge mission `COF-104`. The approved issue or mission goal, plan, acceptance criteria, and URL are in the first message.
 

@@ -47,6 +47,10 @@ export function buildMissionPlan(input: PlanInput): MissionPlan {
         description: `Read ${input.repository}'s relevant code, tests, data contracts, and project instructions; refine the implementation boundary without expanding the approved goal.`,
         acceptanceCriteria: ["The implementation follows existing architecture and identifies the smallest safe change."],
         verification: "Record the affected modules and repository-provided verification commands before editing behavior.",
+        capability: "discovery",
+        agentPolicy: "specialist",
+        dependsOn: [],
+        skills: ["coforge-brownfield"],
       },
       {
         ordinal: 2,
@@ -54,6 +58,10 @@ export function buildMissionPlan(input: PlanInput): MissionPlan {
         description: `Implement the approved goal in one branch and keep the change scoped: ${goal}`,
         acceptanceCriteria: requested,
         verification: browser ? "Exercise the behavior through focused automated tests and the real browser flow." : "Exercise the behavior through focused unit or integration tests.",
+        capability: "implementation",
+        agentPolicy: "specialist",
+        dependsOn: [1],
+        skills: ["coforge-task", ...(browser ? ["coforge-browser-verification"] : [])],
       },
       {
         ordinal: 3,
@@ -64,6 +72,10 @@ export function buildMissionPlan(input: PlanInput): MissionPlan {
           "The pull request describes the goal, changed areas, evidence, limitations, and final commit SHA.",
         ],
         verification: "Confirm the worktree is clean, evidence references HEAD, and GitHub checks are read from the current PR head.",
+        capability: "delivery",
+        agentPolicy: "independent_reviewer",
+        dependsOn: [2],
+        skills: ["coforge-delivery"],
       },
     ],
   });

@@ -14,6 +14,11 @@ assert.match(plan.tasks[0]!.description, /acme\/claims/);
 assert.ok(plan.tasks.some((task) => task.acceptanceCriteria.includes("Status persists after refresh")));
 assert.ok(plan.verification.some((step) => /browser/i.test(step)), "a UI goal includes browser verification");
 assert.match(plan.prTitle, /^Add claim status tracking/i);
+assert.deepEqual(plan.tasks.map((task) => task.capability), ["discovery", "implementation", "delivery"]);
+assert.deepEqual(plan.tasks.map((task) => task.dependsOn), [[], [1], [2]]);
+assert.equal(plan.tasks[0]!.agentPolicy, "specialist");
+assert.equal(plan.tasks[2]!.agentPolicy, "independent_reviewer");
+assert.ok(plan.tasks[1]!.skills.includes("coforge-browser-verification"));
 
 const backend = buildMissionPlan({
   goal: "Add an idempotent webhook endpoint for payment status updates.",

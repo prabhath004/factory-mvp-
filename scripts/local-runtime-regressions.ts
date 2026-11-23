@@ -7,6 +7,7 @@ import { localScreenshotDir, withHooks, withServer } from "../lib/target-wiring"
 const root = join(import.meta.dirname, "..");
 
 assert.deepEqual(COFORGE_SKILLS, [
+  "coforge-orchestrator",
   "coforge-brownfield",
   "coforge-task",
   "coforge-browser-verification",

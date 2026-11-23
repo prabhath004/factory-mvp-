@@ -81,7 +81,7 @@ assert.match(imageProblem({ ...image, versions: { ...image.versions, playbooks: 
 
 // What the playbook points at still resolves from outside the repo.
 const playbook = readFileSync(join(root, "playbooks/factory.md"), "utf8");
-for (const skill of ["coforge-brownfield", "coforge-task", "coforge-browser-verification", "coforge-delivery", "tdd", "fix-ci", "fix-merge-conflicts", "make-pr-easy-to-review", "show-me-your-work", "babysit"]) {
+for (const skill of ["coforge-orchestrator", "coforge-brownfield", "coforge-task", "coforge-browser-verification", "coforge-delivery", "tdd", "fix-ci", "fix-merge-conflicts", "make-pr-easy-to-review", "show-me-your-work", "babysit"]) {
   assert.ok(playbook.includes(`\`${skill}\``), `the playbook names the installed ${skill} skill`);
 }
 assert.ok(!playbook.includes("extends: bug-fix, feature, opening-a-pr"), "it does not extend PStack skill names that 0.9.69 does not ship");

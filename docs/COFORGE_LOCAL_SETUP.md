@@ -66,7 +66,7 @@ The installer does all local runtime setup that used to be manual:
 - creates `~/.config/marshal-factory/config.json` from `.env.local` when it is absent;
 - installs the persistent macOS runner;
 - checks out the pinned PStack release and enables it for both Codex and Claude Code;
-- installs the four Coforge skills (`coforge-brownfield`, `coforge-task`,
+- installs the five Coforge skills (`coforge-orchestrator`, `coforge-brownfield`, `coforge-task`,
   `coforge-browser-verification`, and `coforge-delivery`) for both harnesses; and
 - installs the pinned Playwright MCP browser runtime.
 

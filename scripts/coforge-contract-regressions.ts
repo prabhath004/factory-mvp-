@@ -34,10 +34,17 @@ const plan = missionPlanSchema.parse({
 });
 
 assert.equal(plan.tasks.length, 2);
+assert.equal(plan.tasks[0]!.capability, "implementation", "old stored plans receive safe orchestration defaults");
+assert.deepEqual(plan.tasks[0]!.dependsOn, []);
 assert.throws(
   () => missionPlanSchema.parse({ ...plan, tasks: [plan.tasks[0]] }),
   /Too small|at least 2|array/i,
   "a mission plan must have at least two executable tasks",
+);
+assert.throws(
+  () => missionPlanSchema.parse({ ...plan, tasks: [{ ...plan.tasks[0], dependsOn: [2] }, plan.tasks[1]] }),
+  /dependencies must reference an earlier task/i,
+  "plans cannot contain forward or cyclic dependencies",
 );
 assert.equal(missionStatusSchema.parse("awaiting_approval"), "awaiting_approval");
 assert.throws(() => missionStatusSchema.parse("pretending_to_work"));

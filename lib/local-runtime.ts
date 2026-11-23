@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { SandboxLimits } from "./config";
 
 export const COFORGE_SKILLS = [
+  "coforge-orchestrator",
   "coforge-brownfield",
   "coforge-task",
   "coforge-browser-verification",

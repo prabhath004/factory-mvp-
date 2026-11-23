@@ -35,12 +35,22 @@ export type MissionStatus = z.infer<typeof missionStatusSchema>;
 export const missionTaskStatusSchema = z.enum(["pending", "active", "done", "blocked", "skipped"]);
 export type MissionTaskStatus = z.infer<typeof missionTaskStatusSchema>;
 
+export const missionCapabilitySchema = z.enum(["discovery", "implementation", "verification", "delivery"]);
+export type MissionCapability = z.infer<typeof missionCapabilitySchema>;
+
+export const missionAgentPolicySchema = z.enum(["primary", "specialist", "independent_reviewer"]);
+export type MissionAgentPolicy = z.infer<typeof missionAgentPolicySchema>;
+
 const planTaskSchema = z.object({
   ordinal: z.number().int().min(1).max(5),
   title: z.string().trim().min(3).max(140),
   description: z.string().trim().min(3).max(2_000),
   acceptanceCriteria: z.array(z.string().trim().min(1).max(500)).min(1).max(8),
   verification: z.string().trim().min(3).max(1_000),
+  capability: missionCapabilitySchema.default("implementation"),
+  agentPolicy: missionAgentPolicySchema.default("primary"),
+  dependsOn: z.array(z.number().int().min(1).max(5)).max(4).default([]),
+  skills: z.array(z.string().trim().min(1).max(100)).max(8).default([]),
 });
 export type MissionPlanTask = z.infer<typeof planTaskSchema>;
 
@@ -57,6 +67,11 @@ export const missionPlanSchema = z
     const ordinals = plan.tasks.map((task) => task.ordinal);
     if (ordinals.some((ordinal, index) => ordinal !== index + 1)) {
       context.addIssue({ code: "custom", path: ["tasks"], message: "Task ordinals must be consecutive and start at 1." });
+    }
+    for (const [index, task] of plan.tasks.entries()) {
+      if (task.dependsOn.some((dependency) => dependency >= task.ordinal || !ordinals.includes(dependency))) {
+        context.addIssue({ code: "custom", path: ["tasks", index, "dependsOn"], message: "Task dependencies must reference an earlier task." });
+      }
     }
   });
 export type MissionPlan = z.infer<typeof missionPlanSchema>;
