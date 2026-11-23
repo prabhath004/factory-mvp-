@@ -81,7 +81,10 @@ assert.match(imageProblem({ ...image, versions: { ...image.versions, playbooks: 
 
 // What the playbook points at still resolves from outside the repo.
 const playbook = readFileSync(join(root, "playbooks/factory.md"), "utf8");
-assert.match(playbook, /^---\nextends: bug-fix, feature, opening-a-pr, babysit\n/, "it extends PStack's bundled playbooks, which the image and the runner have");
+for (const skill of ["coforge-brownfield", "coforge-task", "coforge-browser-verification", "coforge-delivery", "tdd", "fix-ci", "fix-merge-conflicts", "make-pr-easy-to-review", "show-me-your-work", "babysit"]) {
+  assert.ok(playbook.includes(`\`${skill}\``), `the playbook names the installed ${skill} skill`);
+}
+assert.ok(!playbook.includes("extends: bug-fix, feature, opening-a-pr"), "it does not extend PStack skill names that 0.9.69 does not ship");
 assert.ok(playbook.includes("`factory-verify`") && playbook.includes("hooks/verify.ts"), "it names factory-verify by PATH and by the factory root, not by a repo path");
 assert.ok(!playbook.includes(REPO_PLAYBOOK), "it never names a repo copy as its own location");
 

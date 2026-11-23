@@ -202,6 +202,8 @@ async function setupScriptEndToEnd(api: string) {
       ...process.env,
       GITHUB_URL: api,
       GITHUB_API_URL: api,
+      GITHUB_APP_NAME: "marshal-factory-ski043",
+      GITHUB_APP_URL: "http://localhost:3000",
       MARSHAL_FACTORY_GITHUB_APP: path,
       NEON_FUNCTION_INGEST_BASE_URL: "https://ingest.invalid",
     },
