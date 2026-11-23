@@ -15,6 +15,8 @@ export function coforgeDescription(mission: CoforgeReadyMission) {
     ...mission.plan.tasks.flatMap((task) => [
       `${task.ordinal}. ${task.title}`,
       `   ${task.description}`,
+      `   Capability: ${task.capability}; agent policy: ${task.agentPolicy.replaceAll("_", " ")}; dependencies: ${task.dependsOn.length ? task.dependsOn.map((dependency) => `#${dependency}`).join(", ") : "none"}.`,
+      `   Skills: ${task.skills.length ? task.skills.join(", ") : "use the Factory playbook defaults"}.`,
       `   Verify: ${task.verification}`,
     ]),
     "",
@@ -26,7 +28,7 @@ export function coforgeDescription(mission: CoforgeReadyMission) {
     "",
     ...mission.plan.verification.map((step) => `- ${step}`),
     "",
-    "Work through the checklist in order in this single branch and pull request. Do not split the mission into separate jobs.",
+    "Use coforge-orchestrator to execute this dependency graph as a bounded autonomous team. Keep one integrated Factory branch and at most one delivery pull request; specialists never deliver independently.",
   ].join("\n");
 }
 

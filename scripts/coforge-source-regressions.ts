@@ -67,6 +67,9 @@ assert.equal(draft?.key, "COF-104");
 assert.equal(draft?.url, "/missions/019b0000-0000-7000-8000-000000000001");
 assert.match(draft?.description ?? "", /## Approved plan/);
 assert.match(draft?.description ?? "", /2\. Add adjuster controls/);
+assert.match(draft?.description ?? "", /Capability: implementation; agent policy: specialist/);
+assert.match(draft?.description ?? "", /dependencies: #1/);
+assert.match(draft?.description ?? "", /bounded autonomous team/);
 assert.deepEqual(adapter.overrides(draft!.sourceState), {
   harness: ["codex"],
   model: ["gpt-6.1-sol"],
