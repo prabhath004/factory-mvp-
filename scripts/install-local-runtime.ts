@@ -64,7 +64,21 @@ function addMarketplace(command: "claude" | "codex", checkout: string) {
   }
 }
 
+function installPlaywright() {
+  const version = loadLimits().sandbox.playwrightMcpVersion;
+  let installed = "";
+  try {
+    installed = run("playwright-mcp", ["--version"], { quiet: true });
+  } catch {}
+  if (!installed.includes(version)) run("npm", ["install", "--global", `@playwright/mcp@${version}`]);
+  const npmRoot = run("npm", ["root", "--global"], { quiet: true }).trim();
+  const playwright = join(npmRoot, "@playwright", "mcp", "node_modules", ".bin", "playwright");
+  if (existsSync(playwright)) run(playwright, ["install", "chromium"]);
+  console.log(`installed Playwright MCP ${version} for local browser verification`);
+}
+
 installSkills();
+installPlaywright();
 const checkout = checkoutPstack();
 if (!hasClaudePstack()) {
   addMarketplace("claude", checkout);

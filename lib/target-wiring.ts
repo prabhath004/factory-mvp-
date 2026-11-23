@@ -11,8 +11,15 @@ type HookEntry = {
 };
 
 /** Ours, per event, in order. PostToolUse takes every tool so the reporter can send usage snapshots. */
-function hooksFor(root: string): Record<string, HookEntry[]> {
-  const reporter = { type: "command", command: `bun "${join(root, "hooks/report.ts")}"`, async: true, timeout: 20 };
+export const localScreenshotDir = (root: string) => join(root, ".local", "browser");
+
+const localBrowserServer = (root: string) => ({
+  command: "playwright-mcp",
+  args: ["--headless", "--isolated", "--browser", "chromium", "--output-dir", localScreenshotDir(root), "--proxy-server", "http://127.0.0.1:9", "--proxy-bypass", "localhost,127.0.0.1,[::1]"],
+});
+
+function hooksFor(root: string, screenshotDir: string): Record<string, HookEntry[]> {
+  const reporter = { type: "command", command: `FACTORY_SCREENSHOT_DIR="${screenshotDir}" bun "${join(root, "hooks/report.ts")}"`, async: true, timeout: 20 };
   return {
     SessionStart: [{ hooks: [reporter] }],
     PreToolUse: [{ matcher: "Agent", hooks: [reporter] }],
@@ -26,9 +33,9 @@ function hooksFor(root: string): Record<string, HookEntry[]> {
 /** hooks/budget.ts counts as ours so rewiring a repo from before the cap was removed drops it. */
 const isOurs = (entry: HookEntry) => entry.hooks?.some((hook) => /hooks\/(report|budget)\.ts/.test(hook.command ?? ""));
 
-export function withHooks(settings: Json, root: string): Json {
+export function withHooks(settings: Json, root: string, screenshotDir = localScreenshotDir(root)): Json {
   const hooks = { ...((settings.hooks as Record<string, HookEntry[]>) ?? {}) };
-  for (const [event, ours] of Object.entries(hooksFor(root))) {
+  for (const [event, ours] of Object.entries(hooksFor(root, screenshotDir))) {
     hooks[event] = [...(hooks[event] ?? []).filter((entry) => !isOurs(entry)), ...ours];
   }
   const permissions = (settings.permissions as Json) ?? {};
@@ -45,8 +52,15 @@ export function withHooks(settings: Json, root: string): Json {
 export const reportServer = (root: string) => ({ command: "bun", args: [join(root, "mcp/factory-report.ts")] });
 
 /** Claude Code's hooks report its stages, so its server only validates. */
-export function withServer(mcp: Json, root: string): Json {
-  return { ...mcp, mcpServers: { ...((mcp.mcpServers as Json) ?? {}), [REPORT_SERVER]: { ...reportServer(root), env: { FACTORY_REPORTER: "hook" } } } };
+export function withServer(mcp: Json, root: string, screenshotDir = localScreenshotDir(root), browser = true): Json {
+  return {
+    ...mcp,
+    mcpServers: {
+      ...((mcp.mcpServers as Json) ?? {}),
+      [REPORT_SERVER]: { ...reportServer(root), env: { FACTORY_REPORTER: "hook", FACTORY_SCREENSHOT_DIR: screenshotDir } },
+      ...(browser && { playwright: localBrowserServer(root) }),
+    },
+  };
 }
 
 /** The factory checkouts a repo's committed wiring points at, read from its settings and .mcp.json text. */

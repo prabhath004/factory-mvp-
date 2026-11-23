@@ -30,6 +30,7 @@ import {
   type SlotHealth,
 } from "../lib/sandbox";
 import type { HarnessChoice } from "../lib/settings";
+import { SCREENSHOT_DIR } from "../lib/screenshots";
 import { readHarnesses } from "../lib/t3-state";
 import { PAIRING_TTL_MINUTES, pairingSchema, type T3Pairing } from "../lib/t3-pairing";
 import { codexReportEnv } from "../lib/report-identity";
@@ -275,8 +276,8 @@ async function wire(host: JobHost) {
   const parse = (text: string | null): Json => (text ? (JSON.parse(text) as Json) : {});
   const userSettings = `${SANDBOX_HOME}/.claude/settings.json`;
   const userConfig = `${SANDBOX_HOME}/.claude.json`;
-  await host.writeFile(userSettings, json(withHooks(parse(await host.readFile(userSettings)), FACTORY_ROOT)));
-  const config = withServer(parse(await host.readFile(userConfig)), FACTORY_ROOT);
+  await host.writeFile(userSettings, json(withHooks(parse(await host.readFile(userSettings)), FACTORY_ROOT, SCREENSHOT_DIR)));
+  const config = withServer(parse(await host.readFile(userConfig)), FACTORY_ROOT, SCREENSHOT_DIR, false);
   const mcpServers = { ...(config.mcpServers as Json), [BROWSER_SERVER]: browserServer };
   await host.writeFile(userConfig, json({ ...config, mcpServers, hasCompletedOnboarding: true }));
 }

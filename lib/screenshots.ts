@@ -7,8 +7,8 @@ import { matchesAny } from "./globs";
 // sends it as a screenshot event ahead of the stage event. Ingest keeps the bytes in
 // job_screenshots, keyed by that stage event and the file, and the panel serves them to the owner.
 
-/** Where the sandbox's headless browser writes its screenshots; see browserServer in lib/sandbox.ts. */
-export const SCREENSHOT_DIR = "/work/browser";
+/** Where the current agent runtime's headless browser writes screenshots. */
+export const SCREENSHOT_DIR = process.env.FACTORY_SCREENSHOT_DIR ?? "/work/browser";
 export const MAX_SCREENSHOTS = 6;
 /** Per image, before base64; a 1280×720 PNG is usually well under it. */
 export const MAX_SCREENSHOT_BYTES = 1_000_000;

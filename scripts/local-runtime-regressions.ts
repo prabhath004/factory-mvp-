@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { COFORGE_SKILLS, localRuntimePlan } from "../lib/local-runtime";
+import { localScreenshotDir, withHooks, withServer } from "../lib/target-wiring";
 
 const root = join(import.meta.dirname, "..");
 
@@ -36,5 +37,12 @@ assert.deepEqual(
   plan.skills.map((skill) => skill.claude),
   COFORGE_SKILLS.map((skill) => `/Users/demo/.claude/skills/${skill}`),
 );
+
+const screenshotDir = localScreenshotDir("/work/marshal-factory");
+const wired = withServer({}, "/work/marshal-factory") as { mcpServers: Record<string, { command: string; args?: string[]; env?: Record<string, string> }> };
+assert.equal(wired.mcpServers.playwright?.command, "playwright-mcp");
+assert.ok(wired.mcpServers.playwright?.args?.includes(screenshotDir));
+assert.equal(wired.mcpServers["factory-report"]?.env?.FACTORY_SCREENSHOT_DIR, screenshotDir);
+assert.match(JSON.stringify(withHooks({}, "/work/marshal-factory")), /FACTORY_SCREENSHOT_DIR/);
 
 console.log("local runtime regressions passed");

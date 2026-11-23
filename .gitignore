@@ -10,4 +10,5 @@ next-env.d.ts
 /coverage
 /out/
 .neon
+.local/
 .neon
